@@ -48,15 +48,6 @@ class SalaryInsightsService
   private
 
   def self.median(scope)
-    salaries = scope.order(:salary).pluck(:salary)
-    return nil if salaries.empty?
-
-    mid = salaries.length / 2
-
-    if salaries.length.odd?
-      salaries[mid]
-    else
-      (salaries[mid - 1] + salaries[mid]) / 2.0
-    end
+    scope.pick(Arel.sql("PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY salary)"))
   end
 end
