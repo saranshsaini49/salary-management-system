@@ -5,8 +5,8 @@ class EmployeesController < ApplicationController
   def index
     employees = Employee.all
 
-    employees = employees.where(country: params[:country]) if params[:country].present?
-    employees = employees.where(job_title: params[:job_title]) if params[:job_title].present?
+    employees = employees.where("country ILIKE ?", params[:country]) if params[:country].present?
+    employees = employees.where("job_title ILIKE ?", params[:job_title]) if params[:job_title].present?
 
     if params[:search].present?
       employees = employees.where("full_name ILIKE ?", "%#{params[:search]}%")

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import debounce from "lodash/debounce";
 import api from "../api/client";
 
 import {
@@ -9,8 +10,6 @@ import {
   TableCell,
   TableBody,
   TextField,
-  Select,
-  MenuItem,
   Pagination,
   Box,
   Typography,
@@ -18,23 +17,49 @@ import {
 
 export default function EmployeesPage() {
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [country, setCountry] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
+
+  const [filters, setFilters] = useState({
+    search: "",
+    country: "",
+    jobTitle: "",
+  });
+
+  // Debounced state (used for API)
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+
+  // Debounce function
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce((newFilters) => {
+        setDebouncedFilters(newFilters);
+        setPage(1); // reset page on filter change
+      }, 500),
+    []
+  );
+
+  // Update debounced filters when UI changes
+  useEffect(() => {
+    debouncedUpdate(filters);
+  }, [filters, debouncedUpdate]);
+
+  useEffect(() => {
+    return () => debouncedUpdate.cancel();
+  }, [debouncedUpdate]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["employees", page, search, country, jobTitle],
+    queryKey: ["employees", page, debouncedFilters],
     queryFn: async () => {
       const res = await api.get("/employees", {
         params: {
           page,
-          search,
-          country,
-          job_title: jobTitle,
+          search: debouncedFilters.search,
+          country: debouncedFilters.country,
+          job_title: debouncedFilters.jobTitle,
         },
       });
-      return res.data;
+      return res.data.data; // assuming paginated response
     },
+    keepPreviousData: true,
   });
 
   if (isLoading) return <p>Loading...</p>;
@@ -49,20 +74,26 @@ export default function EmployeesPage() {
       <Box display="flex" gap={2} mb={3}>
         <TextField
           label="Search Name"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={filters.search}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, search: e.target.value }))
+          }
         />
 
         <TextField
           label="Country"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
+          value={filters.country}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, country: e.target.value }))
+          }
         />
 
         <TextField
           label="Job Title"
-          value={jobTitle}
-          onChange={(e) => setJobTitle(e.target.value)}
+          value={filters.jobTitle}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, jobTitle: e.target.value }))
+          }
         />
       </Box>
 
@@ -78,7 +109,7 @@ export default function EmployeesPage() {
         </TableHead>
 
         <TableBody>
-          {data.map((emp) => (
+          {data?.map((emp) => (
             <TableRow key={emp.id}>
               <TableCell>{emp.full_name}</TableCell>
               <TableCell>{emp.job_title}</TableCell>
@@ -92,7 +123,7 @@ export default function EmployeesPage() {
       {/* Pagination */}
       <Box mt={3}>
         <Pagination
-          count={10} // temporary (we'll fix later)
+          count={10} // we’ll fix using meta later
           page={page}
           onChange={(e, value) => setPage(value)}
         />
