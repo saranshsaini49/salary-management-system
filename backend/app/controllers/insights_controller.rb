@@ -5,7 +5,11 @@ class InsightsController < ApplicationController
 
     result = SalaryInsightsService.country_stats(country)
 
-    render json: result
+    if result[:total_employees] == 0
+      render json: { error: "No employees found for country: #{country}" }, status: :not_found
+    else
+      render json: result
+    end
   end
 
   # GET /insights/job_title
@@ -13,9 +17,17 @@ class InsightsController < ApplicationController
     country = params[:country]
     job_title = params[:job_title]
 
+    if country.blank? || job_title.blank?
+      return render json: { error: "Both 'country' and 'job_title' params are required" }, status: :bad_request
+    end
+
     result = SalaryInsightsService.job_title_stats(country, job_title)
 
-    render json: result
+    if result[:total_employees] == 0
+      render json: { error: "No employees found for #{job_title} in #{country}" }, status: :not_found
+    else
+      render json: result
+    end
   end
 
   # GET /insights/top_roles
