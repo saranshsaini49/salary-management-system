@@ -13,11 +13,21 @@ class EmployeesController < ApplicationController
     end
 
     page = params[:page].to_i > 0 ? params[:page].to_i : 1
-    per_page = params[:per_page].to_i > 0 ? params[:per_page].to_i : 20
+    per_page = [[params[:per_page].to_i, 1].max, 100].min
+    per_page = 20 if params[:per_page].blank?
 
-    employees = employees.offset((page - 1) * per_page).limit(per_page)
+    total_count = employees.count
+    paginated = employees.order(:id).offset((page - 1) * per_page).limit(per_page)
 
-    render json: { data: employees }
+    render json: {
+      data: paginated,
+      meta: {
+        current_page: page,
+        per_page: per_page,
+        total_count: total_count,
+        total_pages: (total_count.to_f / per_page).ceil
+      }
+    }
   end
 
   # GET /employees/:id
