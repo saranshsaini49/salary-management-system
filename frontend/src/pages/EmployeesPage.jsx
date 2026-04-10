@@ -37,14 +37,16 @@ export default function EmployeesPage() {
     []
   );
 
-  // Update debounced filters when UI changes
   useEffect(() => {
-    debouncedUpdate(filters);
-  }, [filters, debouncedUpdate]);
+    const handler = setTimeout(() => {
+      setDebouncedFilters(filters);
+      setPage(1); // reset page on filter change
+    }, 500);
 
-  useEffect(() => {
-    return () => debouncedUpdate.cancel();
-  }, [debouncedUpdate]);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [filters]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["employees", page, debouncedFilters],

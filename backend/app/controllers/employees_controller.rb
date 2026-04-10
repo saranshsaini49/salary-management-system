@@ -17,7 +17,7 @@ class EmployeesController < ApplicationController
 
     employees = employees.offset((page - 1) * per_page).limit(per_page)
 
-    render json: employees
+    render json: { data: employees }
   end
 
   # GET /employees/:id
