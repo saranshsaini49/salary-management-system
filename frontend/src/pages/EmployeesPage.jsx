@@ -10,8 +10,10 @@ import EmptyState from "../components/EmptyState";
 import {
   Table, TableHead, TableRow, TableCell, TableBody, TableContainer,
   TextField, Pagination, Box, Typography, Button, Chip, Paper, Alert,
-  Skeleton,
+  Skeleton, InputAdornment, Stack,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
 
 function statusColor(s) {
   if (s === "active") return "success";
@@ -35,7 +37,6 @@ export default function EmployeesPage() {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({ search: "", country: "", jobTitle: "" });
   const debouncedFilters = useDebounce(filters);
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -53,7 +54,6 @@ export default function EmployeesPage() {
 
   const employees = response?.data || [];
   const meta = response?.meta || { current_page: 1, total_pages: 1, total_count: 0 };
-
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["employees"] });
 
   const saveMutation = useMutation({
@@ -87,25 +87,42 @@ export default function EmployeesPage() {
   };
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5">Employees</Typography>
-        <Button variant="contained" onClick={() => { setEditingEmployee(null); setDialogOpen(true); }}>
+    <>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box>
+          <Typography variant="h5">Employees</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {meta.total_count.toLocaleString()} total employees
+          </Typography>
+        </Box>
+        <Button variant="contained" startIcon={<AddIcon />}
+          onClick={() => { setEditingEmployee(null); setDialogOpen(true); }}>
           Add Employee
         </Button>
       </Box>
 
-      <Box display="flex" gap={2} mb={3} flexWrap="wrap" alignItems="center">
-        <TextField label="Search Name" size="small" value={filters.search}
-          onChange={handleFilterChange("search")} />
-        <TextField label="Country" size="small" value={filters.country}
-          onChange={handleFilterChange("country")} />
-        <TextField label="Job Title" size="small" value={filters.jobTitle}
-          onChange={handleFilterChange("jobTitle")} />
-        <Typography variant="body2" color="text.secondary">
-          {meta.total_count.toLocaleString()} results
-        </Typography>
-      </Box>
+      {/* Filters */}
+      <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
+        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+          <TextField
+            label="Search Name" size="small" value={filters.search}
+            onChange={handleFilterChange("search")}
+            sx={{ minWidth: 220 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start"><SearchIcon fontSize="small" color="action" /></InputAdornment>
+                ),
+              },
+            }}
+          />
+          <TextField label="Country" size="small" value={filters.country}
+            onChange={handleFilterChange("country")} sx={{ minWidth: 160 }} />
+          <TextField label="Job Title" size="small" value={filters.jobTitle}
+            onChange={handleFilterChange("jobTitle")} sx={{ minWidth: 180 }} />
+        </Stack>
+      </Paper>
 
       {isError && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -113,55 +130,75 @@ export default function EmployeesPage() {
         </Alert>
       )}
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Job Title</TableCell>
-              <TableCell>Department</TableCell>
-              <TableCell>Country</TableCell>
-              <TableCell align="right">Salary</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Hire Date</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {isLoading && !employees.length
-              ? Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 8 }).map((_, j) => (
-                      <TableCell key={j}><Skeleton /></TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              : employees.map((emp) => (
-                  <TableRow key={emp.id} hover>
-                    <TableCell>{emp.full_name}</TableCell>
-                    <TableCell>{emp.job_title}</TableCell>
-                    <TableCell>{emp.department || "—"}</TableCell>
-                    <TableCell>{emp.country}</TableCell>
-                    <TableCell align="right">{formatSalary(emp.salary, emp.currency)}</TableCell>
-                    <TableCell>
-                      <Chip label={emp.employment_status?.replace("_", " ")}
-                        color={statusColor(emp.employment_status)} size="small" />
-                    </TableCell>
-                    <TableCell>{emp.hire_date || "—"}</TableCell>
-                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                      <Button size="small" onClick={() => { setEditingEmployee(emp); setDialogOpen(true); }}>
-                        Edit
-                      </Button>
-                      <Button size="small" color="error" onClick={() => setDeleteTarget(emp)}>
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-            }
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {/* Table */}
+      <Paper variant="outlined" sx={{ overflow: "hidden" }}>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Job Title</TableCell>
+                <TableCell>Department</TableCell>
+                <TableCell>Country</TableCell>
+                <TableCell align="right">Salary</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Hire Date</TableCell>
+                <TableCell align="center">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {isLoading && !employees.length
+                ? Array.from({ length: 8 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 8 }).map((_, j) => (
+                        <TableCell key={j}><Skeleton variant="text" /></TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                : employees.map((emp) => (
+                    <TableRow key={emp.id} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={500}>{emp.full_name}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{emp.job_title}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">{emp.department || "—"}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{emp.country}</Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={600}>
+                          {formatSalary(emp.salary, emp.currency)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={emp.employment_status?.replace("_", " ")}
+                          color={statusColor(emp.employment_status)}
+                          size="small" variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">{emp.hire_date || "—"}</Typography>
+                      </TableCell>
+                      <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                        <Button size="small" onClick={() => { setEditingEmployee(emp); setDialogOpen(true); }}>
+                          Edit
+                        </Button>
+                        <Button size="small" color="error" onClick={() => setDeleteTarget(emp)}>
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+              }
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
       {!isLoading && employees.length === 0 && !isError && (
         <EmptyState message="No employees match your filters" />
@@ -169,25 +206,21 @@ export default function EmployeesPage() {
 
       {meta.total_pages > 1 && (
         <Box mt={3} display="flex" justifyContent="center">
-          <Pagination count={meta.total_pages} page={page} onChange={(_, v) => setPage(v)} />
+          <Pagination
+            count={meta.total_pages} page={page}
+            onChange={(_, v) => setPage(v)}
+            shape="rounded"
+          />
         </Box>
       )}
 
-      <EmployeeFormDialog
-        open={dialogOpen}
-        onClose={closeDialog}
-        onSave={handleSave}
-        employee={editingEmployee}
-        isPending={saveMutation.isPending}
-      />
+      <EmployeeFormDialog open={dialogOpen} onClose={closeDialog}
+        onSave={handleSave} employee={editingEmployee} isPending={saveMutation.isPending} />
 
-      <DeleteConfirmDialog
-        open={!!deleteTarget}
-        name={deleteTarget?.full_name}
+      <DeleteConfirmDialog open={!!deleteTarget} name={deleteTarget?.full_name}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => deleteMutation.mutate(deleteTarget.id)}
-        isPending={deleteMutation.isPending}
-      />
-    </Box>
+        isPending={deleteMutation.isPending} />
+    </>
   );
 }

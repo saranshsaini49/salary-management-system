@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Button, Box, Alert, MenuItem, Select,
-  InputLabel, FormControl, FormHelperText,
+  TextField, Button, Alert, MenuItem, Grid,
+  FormHelperText,
 } from "@mui/material";
 import { COUNTRIES, CURRENCIES, EMPLOYMENT_STATUSES, DEPARTMENTS } from "../constants";
 import { validateEmployee, hasErrors } from "../utils/validation";
@@ -49,69 +49,84 @@ function EmployeeForm({ employee, onSave, onClose, isPending }) {
 
   return (
     <>
-      <DialogTitle>{isEdit ? "Edit Employee" : "Add Employee"}</DialogTitle>
-      <DialogContent>
-        <Box display="flex" flexDirection="column" gap={2} mt={1}>
-          {serverError && <Alert severity="error">{serverError}</Alert>}
+      <DialogTitle sx={{ pb: 0 }}>
+        {isEdit ? "Edit Employee" : "Add Employee"}
+      </DialogTitle>
+      <DialogContent sx={{ pt: "20px !important" }}>
+        {serverError && <Alert severity="error" sx={{ mb: 2 }}>{serverError}</Alert>}
 
-          <TextField label="First Name" required value={form.first_name}
-            onChange={update("first_name")} error={!!errors.first_name}
-            helperText={errors.first_name} />
+        <Grid container spacing={2.5}>
+          {/* Row 1: Names */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField label="First Name" required fullWidth value={form.first_name}
+              onChange={update("first_name")} error={!!errors.first_name}
+              helperText={errors.first_name} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField label="Last Name" required fullWidth value={form.last_name}
+              onChange={update("last_name")} error={!!errors.last_name}
+              helperText={errors.last_name} />
+          </Grid>
 
-          <TextField label="Last Name" required value={form.last_name}
-            onChange={update("last_name")} error={!!errors.last_name}
-            helperText={errors.last_name} />
-
-          <TextField label="Job Title" required value={form.job_title}
-            onChange={update("job_title")} error={!!errors.job_title}
-            helperText={errors.job_title} />
-
-          <FormControl>
-            <InputLabel>Department</InputLabel>
-            <Select value={form.department} label="Department" onChange={update("department")}>
+          {/* Row 2: Job Title + Department */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField label="Job Title" required fullWidth value={form.job_title}
+              onChange={update("job_title")} error={!!errors.job_title}
+              helperText={errors.job_title} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField label="Department" fullWidth select value={form.department}
+              onChange={update("department")} error={!!errors.department}
+              helperText={errors.department}>
               <MenuItem value="">None</MenuItem>
               {DEPARTMENTS.map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
-            </Select>
-            {errors.department && <FormHelperText error>{errors.department}</FormHelperText>}
-          </FormControl>
+            </TextField>
+          </Grid>
 
-          <FormControl required error={!!errors.country}>
-            <InputLabel>Country</InputLabel>
-            <Select value={form.country} label="Country" onChange={update("country")}>
+          {/* Row 3: Country */}
+          <Grid size={{ xs: 12 }}>
+            <TextField label="Country" required fullWidth select value={form.country}
+              onChange={update("country")} error={!!errors.country}
+              helperText={errors.country}>
               {COUNTRIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-            </Select>
-            {errors.country && <FormHelperText>{errors.country}</FormHelperText>}
-          </FormControl>
+            </TextField>
+          </Grid>
 
-          <Box display="flex" gap={2}>
-            <TextField label="Salary" required type="number" value={form.salary}
+          {/* Row 4: Salary + Currency */}
+          <Grid size={{ xs: 12, sm: 8 }}>
+            <TextField label="Salary" required fullWidth type="number" value={form.salary}
               onChange={update("salary")} error={!!errors.salary}
-              helperText={errors.salary} sx={{ flex: 1 }}
+              helperText={errors.salary}
               slotProps={{ htmlInput: { min: 0, step: "any" } }} />
-            <FormControl sx={{ minWidth: 100 }}>
-              <InputLabel>Currency</InputLabel>
-              <Select value={form.currency} label="Currency" onChange={update("currency")}>
-                {CURRENCIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Box>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField label="Currency" fullWidth select value={form.currency}
+              onChange={update("currency")}>
+              {CURRENCIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+            </TextField>
+          </Grid>
 
-          <FormControl required error={!!errors.employment_status}>
-            <InputLabel>Status</InputLabel>
-            <Select value={form.employment_status} label="Status" onChange={update("employment_status")}>
+          {/* Row 5: Status + Hire Date */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField label="Status" required fullWidth select value={form.employment_status}
+              onChange={update("employment_status")} error={!!errors.employment_status}
+              helperText={errors.employment_status}>
               {EMPLOYMENT_STATUSES.map((s) => (
-                <MenuItem key={s} value={s}>{s.replace("_", " ")}</MenuItem>
+                <MenuItem key={s} value={s}>
+                  {s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ")}
+                </MenuItem>
               ))}
-            </Select>
-            {errors.employment_status && <FormHelperText>{errors.employment_status}</FormHelperText>}
-          </FormControl>
-
-          <TextField label="Hire Date" type="date" value={form.hire_date}
-            onChange={update("hire_date")} slotProps={{ inputLabel: { shrink: true } }} />
-        </Box>
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField label="Hire Date" fullWidth type="date" value={form.hire_date}
+              onChange={update("hire_date")}
+              slotProps={{ inputLabel: { shrink: true } }} />
+          </Grid>
+        </Grid>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 1 }}>
+        <Button onClick={onClose} variant="outlined">Cancel</Button>
         <Button variant="contained" onClick={handleSave} disabled={isPending}>
           {isPending ? "Saving…" : "Save"}
         </Button>
