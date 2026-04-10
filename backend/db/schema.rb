@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_10_012830) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_10_020100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -25,8 +25,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_10_012830) do
     t.string "currency", default: "USD"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "hire_date"
+    t.string "employment_status", default: "active", null: false
+    t.index ["country", "job_title"], name: "index_employees_on_country_and_job_title"
     t.index ["country"], name: "index_employees_on_country"
+    t.index ["employment_status"], name: "index_employees_on_employment_status"
     t.index ["full_name"], name: "index_employees_on_full_name"
+    t.index ["hire_date"], name: "index_employees_on_hire_date"
     t.index ["job_title"], name: "index_employees_on_job_title"
   end
 
