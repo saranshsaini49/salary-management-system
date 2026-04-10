@@ -1,5 +1,6 @@
 class Employee < ApplicationRecord
   VALID_CURRENCIES = %w[USD EUR GBP INR CAD].freeze
+  VALID_STATUSES = %w[active on_leave terminated].freeze
 
   validates :first_name, :last_name, :full_name, :job_title, :country, :salary, presence: true
   validates :first_name, :last_name, length: { maximum: 100 }
@@ -8,6 +9,7 @@ class Employee < ApplicationRecord
   validates :department, length: { maximum: 100 }, allow_nil: true
   validates :salary, numericality: { greater_than: 0 }
   validates :currency, inclusion: { in: VALID_CURRENCIES }, allow_nil: true
+  validates :employment_status, inclusion: { in: VALID_STATUSES }
 
   before_validation :set_full_name
 

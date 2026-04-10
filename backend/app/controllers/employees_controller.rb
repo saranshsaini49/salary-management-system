@@ -77,7 +77,9 @@ class EmployeesController < ApplicationController
       :department,
       :country,
       :salary,
-      :currency
+      :currency,
+      :hire_date,
+      :employment_status
     )
   end
 end
