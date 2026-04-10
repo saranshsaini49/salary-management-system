@@ -8,7 +8,8 @@ class SalaryInsightsService
       min_salary: employees.minimum(:salary),
       max_salary: employees.maximum(:salary),
       avg_salary: employees.average(:salary)&.to_f,
-      median_salary: median(employees)
+      median_salary: median(employees),
+      salary_distribution: salary_distribution(country)
     }
   end
 
@@ -36,6 +37,12 @@ class SalaryInsightsService
       .where(country: country)
       .group("FLOOR(salary / 10000) * 10000")
       .count
+      .map do |range, count|
+        {
+          range: "#{range}-#{range + 10000}",
+          count: count
+        }
+      end
   end
 
   private

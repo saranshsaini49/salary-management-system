@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import EmployeesPage from "./pages/EmployeesPage";
 import InsightsPage from "./pages/InsightsPage";
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
     <BrowserRouter>
+      <Navbar />
       <Routes>
         <Route path="/" element={<EmployeesPage />} />
         <Route path="/insights" element={<InsightsPage />} />

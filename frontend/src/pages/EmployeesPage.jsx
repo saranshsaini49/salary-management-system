@@ -1,6 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import debounce from "lodash/debounce";
 import api from "../api/client";
 
 import {
@@ -24,31 +23,19 @@ export default function EmployeesPage() {
     jobTitle: "",
   });
 
-  // Debounced state (used for API)
   const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
-  // Debounce function
-  const debouncedUpdate = useMemo(
-    () =>
-      debounce((newFilters) => {
-        setDebouncedFilters(newFilters);
-        setPage(1); // reset page on filter change
-      }, 500),
-    []
-  );
-
+  // Debounce (clean version)
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedFilters(filters);
-      setPage(1); // reset page on filter change
+      setPage(1);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [filters]);
 
-  const { data, isLoading } = useQuery({
+  const { data = [], isLoading } = useQuery({
     queryKey: ["employees", page, debouncedFilters],
     queryFn: async () => {
       const res = await api.get("/employees", {
@@ -59,12 +46,11 @@ export default function EmployeesPage() {
           job_title: debouncedFilters.jobTitle,
         },
       });
-      return res.data.data; // assuming paginated response
+
+      return res.data.data;
     },
     keepPreviousData: true,
   });
-
-  if (isLoading) return <p>Loading...</p>;
 
   return (
     <Box p={3}>
@@ -99,6 +85,8 @@ export default function EmployeesPage() {
         />
       </Box>
 
+      {isLoading && <p>Updating...</p>}
+
       {/* Table */}
       <Table>
         <TableHead>
@@ -111,12 +99,14 @@ export default function EmployeesPage() {
         </TableHead>
 
         <TableBody>
-          {data?.map((emp) => (
+          {data.map((emp) => (
             <TableRow key={emp.id}>
               <TableCell>{emp.full_name}</TableCell>
               <TableCell>{emp.job_title}</TableCell>
               <TableCell>{emp.country}</TableCell>
-              <TableCell>{emp.salary}</TableCell>
+              <TableCell>
+                {emp.salary?.toLocaleString()}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -125,7 +115,7 @@ export default function EmployeesPage() {
       {/* Pagination */}
       <Box mt={3}>
         <Pagination
-          count={10} // we’ll fix using meta later
+          count={10} // later replace with backend meta
           page={page}
           onChange={(e, value) => setPage(value)}
         />
